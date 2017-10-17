@@ -13,14 +13,14 @@ execfile("diffusionSchemes.py")
 execfile("diagnostics.py")
 execfile("initialConditions.py")
 
-def main(xmin = 0., xmax = 1., nx = 21, nt = 20, dt = 0.1, K = 2e-3, 
+def main(xmin = 0., xmax = 1., nx = 41, nt = 40, dt = 0.1, K = 1e-3, 
          squareWaveMin = 0.4, squareWaveMax = 0.6):
     "Diffuse a square wave between squareWaveMin and squareWaveMax on a domain"
     "between x = xmin and x = xmax split over nx spatial steps with diffusion"
     "coefficient K, time step dt for nt time steps"
     
     # Derived parameters
-    dx = (xmax - xmin)(nx -1)
+    dx = (xmax - xmin)/(nx -1)
     d = K*dt/dx**2  # Non-dimensional diffusion coefficient
     print("Non-dimensional diffusion coefficient = ", d)
     print("dx = ", dx, " dt = ", dt, " nt = ", nt)
@@ -63,8 +63,17 @@ def main(xmin = 0., xmax = 1., nx = 21, nt = 20, dt = 0.1, K = 2e-3,
     plt.ylim([0, 1])
     plt.legend(bbox_to_anchor=(1.1, 1))
     plt.xlabel('$x$')
+    plt.ylabel('$\phi$')
     plt.savefig('plots/FTCS_BTCS.pdf')
     
-main()
+    plt.figure(2)
+    plt.plot(x, phiFTCS-phiAnalytic, label='FTCSerror', color='blue')
+    plt.plot(x, phiBTCS-phiAnalytic, label='BTCSerror', color='red')
+    plt.legend(bbox_to_anchor=(1.1, 1))
+    plt.xlabel('$x$')
+    plt.ylabel('$\Delta \phi$')
+    plt.savefig('plots/FTCS_BTCS_error.pdf')
+    
+#main()
     
     
