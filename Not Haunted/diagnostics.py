@@ -18,6 +18,8 @@ def analyticErf(x, Kt, alpha, beta):
     "The analytic solution of the 1d diffusion equation with diffusion"
     "coeffienct K at time t assuming top-hat initial conditions which are"
     "one between alpha and beta and zero elsewhere"
+    "and whose boundary conditions are zero at both infinity and negative"
+    "infinity"
     
     phi = 0.5 * special.erf((x-alpha)/np.sqrt(4*Kt))  \
         - 0.5 * special.erf((x-beta )/np.sqrt(4*Kt))
