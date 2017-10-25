@@ -39,3 +39,18 @@ def L2ErrorNorm(phi, phiExact):
     L2 = np.sqrt(sum(phiError**2)/sum(phiExact**2))
 
     return L2
+    
+def analyticAlt(x, Kt, inf):
+    "Analytic solution of 1d diffusion equations for initial top hat between"
+    "0.4 and 0.6, where inf is the number of terms taken in fourier series"
+    "With the same boundary conditions of zero flux out of the ends as"
+    "numerical schemes"
+    
+    phi = 0.2
+    
+    for m in xrange(1, inf):
+        
+        phi += -((2/(np.pi*m))*np.sin(4*m*np.pi/5)*np.cos(2*m*x*np.pi)*
+                                                np.exp(-4*np.pi**2*m**2*Kt))
+        
+    return phi

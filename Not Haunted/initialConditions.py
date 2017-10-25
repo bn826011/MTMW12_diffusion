@@ -23,3 +23,16 @@ def squareWave(x,alpha,beta):
         phi[j] = max((min(beta, xe) - max(alpha, xw))/dx, 0)
 
     return phi
+    
+def worseWave(x, alpha, beta):
+    "A non-conservative, naive initialisation of the above square wave"
+
+    phi = np.zeros_like(x)
+    
+    for j in xrange(1, len(x)-1):
+        
+        if (x[j] > alpha) & (x[j] < beta):
+            
+            phi[j] = 1
+            
+    return phi
