@@ -50,7 +50,7 @@ def analyticAlt(x, Kt, inf):
     
     for m in xrange(1, inf):
         
-        phi += -((2/(np.pi*m))*np.sin(4*m*np.pi/5)*np.cos(2*m*x*np.pi)*
-                                                np.exp(-4*np.pi**2*m**2*Kt))
+        phi += -(2/(np.pi*m))*np.sin(4*m*np.pi/5)*np.cos(2*m*x*np.pi)*\
+                                                np.exp(-4*np.pi**2*m**2*Kt)
         
     return phi

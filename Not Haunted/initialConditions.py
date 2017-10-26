@@ -26,6 +26,9 @@ def squareWave(x,alpha,beta):
     
 def worseWave(x, alpha, beta):
     "A non-conservative, naive initialisation of the above square wave"
+    "simply samples function for initial conditions at grid point"
+    "will have different area beneath depending on size of x"
+    "Area tends to 0.2 from below as len(x) tends to infinity"
 
     phi = np.zeros_like(x)
     

@@ -55,7 +55,7 @@ def main(xmin = 0., xmax = 1., nx = 41, nt = 40, dt = 0.1, K = 1e-3,
     phiAnalytic = analyticErf(x, K*dt*nt, squareWaveMin, squareWaveMax)
     
     if usebetteranalyticsolution == 1:
-        phiAnalytic = analyticAlt(x, K*dt*nt, inf)
+        phiAnalytic = analyticAlt(x, K*dt*nt, max(inf, nx))
     
     # Diffusion using FTCS and BTCS
     phiFTCS = FTCS(phiOld.copy(), d, nt)
@@ -194,10 +194,12 @@ def stabilitytestt(nxvec = [21, 51, 101, 201], ntvec = 5*2**np.arange(10)):
     plt.savefig('plots/BTCS_errornorm.pdf')
     plt.show()
 
-def ordertest(nxvec = 5*np.arange(1, 21)+1, d = 0.1, K = 1e-3):
+def ordertest(nxvec = 5*np.arange(1, 21)+1, d = 0.1, K = 1e-3, ylims = 1,
+              stringmod = ''):
     "Function to test the order of the numerical schemes FTCS & BTCS"
     "nt = (4K/d)(nx-1)^2, and so nx must be chosen s.t. nt is an integer"
     
+    dxvec = 1/(nxvec -1)
     dtvec = d/(K*(nxvec - 1)**2)
     ntvec = 4/dtvec
     
@@ -209,19 +211,84 @@ def ordertest(nxvec = 5*np.arange(1, 21)+1, d = 0.1, K = 1e-3):
     for counter in xrange(xno):
         
         [FTL2en[counter], BTL2en[counter]] = main(nx = nxvec[counter], 
-                      nt = ntvec[counter], dt = dtvec[counter], printindex = 0)
+                      nt = ntvec[counter], dt = dtvec[counter], printindex = 0,
+                      usebetteranalyticsolution = 1)
     
+    orderFx = np.zeros(xno-1)
+    orderFt = np.zeros(xno-1)
+    orderBx = np.zeros(xno-1)
+    orderBt = np.zeros(xno-1)
+    
+    for cn in xrange(xno-1):
+        
+        orderFx[cn] = (np.log(FTL2en[cn])-np.log(FTL2en[cn+1]))/\
+                                        (np.log(dxvec[cn])-np.log(dxvec[cn+1]))                              
+        orderFt[cn] = (np.log(FTL2en[cn])-np.log(FTL2en[cn+1]))/\
+                                        (np.log(dtvec[cn])-np.log(dtvec[cn+1]))    
+        orderBx[cn] = (np.log(BTL2en[cn])-np.log(BTL2en[cn+1]))/\
+                                        (np.log(dxvec[cn])-np.log(dxvec[cn+1]))    
+        orderBt[cn] = (np.log(BTL2en[cn])-np.log(BTL2en[cn+1]))/\
+                                        (np.log(dtvec[cn])-np.log(dtvec[cn+1]))
+                                        
     plt.figure(6)
     plt.clf()
-    plt.semilogy(dtvec, FTL2en, label='FTCS', color='blue')
-    plt.semilogy(dtvec, BTL2en, label='BTCS', color='red')
-    plt.legend(bbox_to_anchor=(0.6, 1))
-    plt.xlabel('$dt$')
-    plt.ylabel('L2 error norm')
-    plt.savefig('plots/FTCS_BTCS_errornorm_order.pdf')
+    plt.semilogx(dtvec[0:-1], orderFx, color='blue', linestyle='-',
+             label = 'FTCS error order in x')
+    plt.semilogx(dtvec[0:-1], orderFt, color='blue', linestyle='--',
+             label = 'FTCS error order in t')
+    plt.semilogx(dtvec[0:-1], orderBx, color='red', linestyle='-',
+             label = 'BTCS error order in x')
+    plt.semilogx(dtvec[0:-1], orderBt, color='red', linestyle='--',
+             label = 'BTCS error order in t')   
+    if ylims == 1:
+        plt.ylim([0, 2.5])
+    plt.xlabel('$\Delta t = d(\Delta x)^2/K$')
+    plt.ylabel('Calculated order of method')
+    plt.legend(bbox_to_anchor=(1.3, 1.1))
+    plt.savefig('plots/ordertest' + stringmod + '.pdf')
     plt.show()
 
+    plt.figure(7)
+    plt.clf()
+    plt.loglog(dtvec, FTL2en, color='blue', label='FTCS')
+    plt.loglog(dtvec, BTL2en, color='red', label='BTCS')
+    plt.loglog(dtvec, 0.046*(dtvec), color='black', label='0.046*$\Delta t$')
+    if ylims == 1:
+        plt.clf()
+        plt.xlim([0, 0.5])
+        plt.ylim([0, 0.03])
+        plt.plot(dtvec, FTL2en, color='blue', label='FTCS')
+        plt.plot(dtvec, BTL2en, color='red', label='BTCS')
+        plt.plot(dtvec, 0.046*(dtvec), color='black', label='0.046*$\Delta t$')        
+    plt.xlabel('$\Delta t = d(\Delta x)^2/K$')
+    plt.ylabel('L2 error norm')
+    plt.legend(bbox_to_anchor=(0.4, 1))
+    plt.savefig('plots/errorbydt' + stringmod + '.pdf')
+    plt.show()
+        
+    plt.figure(8)
+    plt.clf()
+    plt.loglog(dxvec, FTL2en, color='blue', label='FTCS')
+    plt.loglog(dxvec, BTL2en, color='red', label='BTCS')
+    plt.loglog(dxvec, 4.6*(dxvec)**2, color='black', label='4.6*$\Delta x$')
+    if ylims == 1:
+        plt.clf()
+        plt.xlim([0, 0.05])
+        plt.ylim([0, 0.05])
+        plt.plot(dxvec, FTL2en, color='blue', label='FTCS')
+        plt.plot(dxvec, BTL2en, color='red', label='BTCS')
+        plt.plot(dxvec, 4.6*(dxvec)**2, color='black', label='4.6*$\Delta x$')
+    plt.xlabel('$\Delta x$')
+    plt.ylabel('L2 error norm')
+    plt.legend(bbox_to_anchor=(0.3, 1))
+    plt.savefig('plots/errorbydx' + stringmod + '.pdf')
+    plt.show()
+    
+    
 
+#print('For some reason I cannot use LaTeX on the computors in the Met '+
+#'department, so I am instead forced to type my write-up into Phython.')
+#print('Apologies')
 #print('Question 1')
 #main()
 #print('Question 2')
@@ -243,6 +310,10 @@ def ordertest(nxvec = 5*np.arange(1, 21)+1, d = 0.1, K = 1e-3):
 # 'conservation of area in the range 0 - 1 for the analytic solution, as it ' +
 # 'is a solution for an infinite domain. As t $\ rightarrow$ $\infty$ the ' +
 # 'analytic solution will tend to zero everywhere.')
+#main(nt = 400, stringmod = '_nt400_bas', usebetteranalyticsolution = 1)
+#print('We can see that by comparing to an analytic solution using the same '+
+#'initial conditions as our numerical method the errors are greatly reduced '+
+#'and area beneath the graph is, to a better approximation, conserved')
 #print('Question 4')
 #stabilitytestx()
 #print('To test the stability of my implementations of FTCS and BTCS, my' +
@@ -277,7 +348,7 @@ def ordertest(nxvec = 5*np.arange(1, 21)+1, d = 0.1, K = 1e-3):
 #main(nx = 51, nt = 16, dt = 0.25, stringmod = '_nx51nt16')
 #main(nx = 51, nt = 16, dt = 0.25, ylimits = [-5, 5], stringmod = '_nx51nt16full')
 #print('A curious thing is a lack of observable oscillations for 0.25 < d < 0.5')
-#main(nx = 141, nt = 16, dt = 0.025)
+#main(nx = 141, nt = 16, dt = 0.025, stringmod = '_nx141nt16')
 #print('The reason for which perhaps being either that the analytic ' +
 #'equation merely indicates that oscillations are possible rather than ' +
 #'predicted, that the oscillations occur on a smaller wavelength than the '+
@@ -285,13 +356,34 @@ def ordertest(nxvec = 5*np.arange(1, 21)+1, d = 0.1, K = 1e-3):
 #'amplitudes are so small in comparison to 1, or the background error, that '+
 #'they are inpercievable in our plots. Whatever the reason, I have managed '+
 #'find one instance illustrating oscillations for d<0.5 in nx = 141, dt = 0.025')
-#main(nx = 36, nt = 40, dt = 0.4)
-#main(nx = 36, nt = 40, dt = 0.4, usebetteranalyticsolution = 1)
+#main(nx = 36, nt = 40, dt = 0.4, stringmod = '_nx36')
+#main(nx = 36, nt = 40, dt = 0.4, stringmod = '_nx36bas', usebetteranalyticsolution = 1)
 #print('The oscillations are slightly clearer when comparing it to an '
 #'alternative analytic solution with the same boundary conditions, but not '
-#'by much.')
+#'by much. These enhanced oscillations may be due to either the reduction in '+
+#'error in comparision to the error function solution, or due to the removal '+
+#'of higher modes in the plotting of the fourier solution. By having as least '+
+#'as many modes as there are x gridpoints I have hoped to remove the latter '+
+#'as an option.')
 #print('Question 5')
-#
+#print('From fairly thorough Taylor analysis we can see that the error in '+
+#'our solution for phi $\epsilon \approx A\Delta t + B(\Delta x)^2$.')
+#print('Through our error analysis we will hold $d = \frac{K\Delta t}{(\Delta x)^2}'+
+#'to be constant. Therefore for this particular numerical scheme, conveniently, '+
+#'we can substitute this in giving us that $\epsilon \approx (Ad/K + B)(\Delta x)^2 '+
+#'\approx (A + BK/d)(\Delta t)$. This means that with two values of the error '+
+#'$\epsilon_1$ and $\epsilon_2$, with corresponding $\Delta x_1, \Delta x_2, '+
+#'\Delta t_1 and \Delta t_2$ we should see that \frac{log(\epsilon_1)-log(\epsilon_2)}'+
+#'{log(\Delta x_1) - log(\Delta x_2)} = 2, and \frac{log(\epsilon_1)-log(\epsilon_2)}'+
+#'{log(\Delta t_1) - log(\Delta t_2)} = 1, as theory would predict.')
+#print('I feel the need to note that this is an artefact of both our '+
+#'differential equation and our numerical method being first order in time '+
+#'and second order in space, and would not work with, for example, the CTCS '+
+#'for which the numerical method was second order in time, but the differential '+
+#'equation only first order in time (also it is unstable everywhere).')
+#ordertest()
+#ordertest(ylims = 0, stringmod = '_full')
+#print('')
 #print('Question 6')
 #main(stringmod = '_wic', useworseinitialconditions = 1)
 #main(nt = 1000, stringmod = '_nt1k_wic', useworseinitialconditions = 1)
@@ -301,6 +393,11 @@ def ordertest(nxvec = 5*np.arange(1, 21)+1, d = 0.1, K = 1e-3):
 #'not start off with the same area beneath the plot of 0.2 as the other '
 #'initial conditions and our analytic solutions do. This causes the '
 #'numerical solution to be less than the analytic solution.')
-
+#main(nt = 5000, stringmod = '_nt5k')
+#main(nt = 5000, stringmod = '_nt5kbas', usebetteranalyticsolution = 1)
+#print('Although something interesting to obsterve is that the better initial '+
+#'conditions at very long times have a total area just slightly larger than '+
+#'that of the analytic solution')
+#print('Question 7')
 
  
